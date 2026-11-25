@@ -34,15 +34,16 @@ def _get_base_ydl_opts() -> Dict[str, Any]:
         "ignoreerrors": False,
         "logtostderr": False,
         "user_agent": DEFAULT_USER_AGENT,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android_vr", "tv", "ios", "mweb", "web"],
-            }
-        },
     }
     cookie_path = _get_cookie_file_path()
     if cookie_path:
         opts["cookiefile"] = cookie_path
+    else:
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["android_vr", "tv", "ios", "web"],
+            }
+        }
     if FFMPEG_PATH:
         opts["ffmpeg_location"] = FFMPEG_PATH
     if NODE_PATH:
