@@ -13,6 +13,18 @@ from app.schemas import ParseResponse, FormatInfo
 from app.utils import detect_platform, format_duration, format_bytes, sanitize_filename
 
 
+def _get_cookie_file_path() -> str | None:
+    """Agar YOUTUBE_COOKIES yoki YTDLP_COOKIES env berilgan bo'lsa, vaqtinchalik cookie faylini tayyorlaydi."""
+    cookies_content = os.environ.get("YOUTUBE_COOKIES") or os.environ.get("YTDLP_COOKIES")
+    if not cookies_content or not cookies_content.strip():
+        return None
+
+    cookie_path = os.path.join(tempfile.gettempdir(), "snapany_yt_cookies.txt")
+    with open(cookie_path, "w", encoding="utf-8") as f:
+        f.write(cookies_content.strip() + "\n")
+    return cookie_path
+
+
 def _get_base_ydl_opts() -> Dict[str, Any]:
     """Asosiy yt-dlp konfiguratsiyasini qaytaradi."""
     opts: Dict[str, Any] = {
@@ -22,7 +34,15 @@ def _get_base_ydl_opts() -> Dict[str, Any]:
         "ignoreerrors": False,
         "logtostderr": False,
         "user_agent": DEFAULT_USER_AGENT,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android_vr", "tv", "ios", "mweb", "web"],
+            }
+        },
     }
+    cookie_path = _get_cookie_file_path()
+    if cookie_path:
+        opts["cookiefile"] = cookie_path
     if FFMPEG_PATH:
         opts["ffmpeg_location"] = FFMPEG_PATH
     if NODE_PATH:
@@ -76,7 +96,13 @@ async def parse_media_url(url: str) -> ParseResponse:
         info = await loop.run_in_executor(None, _extract)
     except Exception as e:
         error_msg = str(e)
-        if "Private video" in error_msg or "Sign in" in error_msg:
+        lower_err = error_msg.lower()
+        if "not a bot" in lower_err or "confirm you" in lower_err:
+            raise ValueError(
+                "YouTube server IP manzilini bot tekshiruvidan o'tkazmadi. "
+                "Render muhitida YOUTUBE_COOKIES o'zgaruvchisini sozlash tavsiya etiladi."
+            )
+        elif "Private video" in error_msg or "Sign in" in error_msg:
             raise ValueError("Ushbu video xususiy (private) yoki platformada tizimga kirishni talab qiladi.")
         elif "unavailable" in error_msg.lower() or "not found" in error_msg.lower():
             raise ValueError("Video mavjud emas yoki o'chirib tashlangan.")
