@@ -1,0 +1,17 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+downloads/
+temp/
+*.log
+.env
+.env.*
+.idea/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
