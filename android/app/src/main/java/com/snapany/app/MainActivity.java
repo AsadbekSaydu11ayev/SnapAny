@@ -231,11 +231,12 @@ public class MainActivity extends AppCompatActivity {
     private void enqueueDownload(String url, String contentDisposition, String mimeType) {
         try {
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
-            if (fileName == null || fileName.equals("downloadfile.bin")) {
+            String guessedName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+            if (guessedName == null || guessedName.equals("downloadfile.bin")) {
                 boolean isAudio = url.contains("_mp3") || url.contains("format_id=mp3") || url.contains("best_audio");
-                fileName = "SnapAny_" + System.currentTimeMillis() + (isAudio ? ".mp3" : ".mp4");
+                guessedName = "SnapAny_" + System.currentTimeMillis() + (isAudio ? ".mp3" : ".mp4");
             }
+            final String fileName = guessedName;
 
             request.setTitle(fileName);
             request.setDescription("SnapAny orqali yuklanmoqda...");
